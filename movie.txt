@@ -1,0 +1,448 @@
+package com.example.eda1707.movie;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class MovieList {
+
+    List<MovieInfo> items = new ArrayList<MovieInfo>();
+    int total;
+}
+
+
+
+
+
+
+
+
+
+
+package com.example.eda1707.movie;
+
+import android.content.Context;
+import android.support.annotation.NonNull;
+import android.support.v7.widget.RecyclerView;
+import android.text.Html;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.RatingBar;
+import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
+public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.ViewHolder> {
+
+    Context context;
+
+    List<MovieInfo> items = new ArrayList<>();
+
+    OnItemClickListener listener;
+
+    public static interface OnItemClickListener{
+        public void onItemClick(ViewHolder holder, View view, int position);
+    }
+
+    public MovieAdapter(Context context){
+        this.context = context;
+    }
+
+    @Override
+    public int getItemCount() {
+        return items.size();
+    }
+
+    @Override
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View itemView = inflater.inflate(R.layout.movie_item, viewGroup ,false);
+
+        return new ViewHolder(itemView);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull ViewHolder viewHolder, int i) {
+        MovieInfo item = items.get(i);
+        viewHolder.setItem(item);
+
+        viewHolder.setOnItemClickListener(listener);
+    }
+
+   public MovieInfo getItem(int position){
+        return items.get(position);
+
+    }
+
+    public void addItem(MovieInfo item){
+        items.add(item);
+    }
+
+    public void addItems(List<MovieInfo> items) {
+        this.items.addAll(items);
+        //notifyDataSetChanged();
+        notifyItemRangeInserted(this.items.size(), items.size());
+    }
+
+    public void clearItems(){
+        items.clear();
+        notifyDataSetChanged();
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener){
+        this.listener = listener;
+    }
+
+    class ViewHolder extends RecyclerView.ViewHolder{
+        @BindView(R.id.title)
+                TextView titleView;
+        @BindView(R.id.pubDate)
+                TextView pubDateView;
+        @BindView(R.id.director)
+                TextView directorView;
+        @BindView(R.id.actor)
+                TextView actorView;
+        @BindView(R.id.image)
+                ImageView imageView;
+        @BindView(R.id.userRating)
+                RatingBar userRatingView;
+
+        OnItemClickListener listener;
+
+        public ViewHolder(@NonNull View itemView) {
+            super(itemView);
+
+            ButterKnife.bind(this, itemView);
+
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int position = getAdapterPosition();
+
+                    if(listener != null) {
+                        listener.onItemClick(ViewHolder.this, v, position);
+                    }
+                }
+            });
+        }
+
+        public void setItem(MovieInfo item) {
+            titleView.setText(Html.fromHtml(item.getTitle()));
+            userRatingView.setRating(item.getUserRating() / 2);
+            pubDateView.setText(Html.fromHtml(item.getPubDate()));
+            directorView.setText(Html.fromHtml(item.getDirector()));
+            actorView.setText(Html.fromHtml(item.getActor()));
+            Glide.with(context).load(item.getImage()).into(imageView);
+        }
+
+        public void setOnItemClickListener(OnItemClickListener listener){
+            this.listener = listener;
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+package com.example.eda1707.movie;
+
+import java.util.Date;
+
+public class MovieInfo {
+    String image;
+    String title;
+    String director;
+    String actor;
+    String pubDate;
+    float userRating;
+    String link;
+
+    public MovieInfo(String image, String title,String pubDate, String director, String actor, int userRating, String link) {
+        this.image = image;
+        this.title = title;
+        this.pubDate = pubDate;
+        this.director = director;
+        this.actor = actor;
+        this.userRating = userRating;
+        this.link = link;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDirector() {
+        return director;
+    }
+
+    public void setDirector(String director) {
+        this.director = director;
+    }
+
+    public String getActor() {
+        return actor;
+    }
+
+    public void setActor(String actor) {
+        this.actor = actor;
+    }
+
+    public String getPubDate() {
+        return pubDate;
+    }
+
+    public void setPubDate(String pubDate) {
+        this.pubDate = pubDate;
+    }
+
+    public float getUserRating() {
+        return userRating;
+    }
+
+    public void setUserRating(float userRating) {
+        this.userRating = userRating;
+    }
+
+    public String getLink() {
+        return link;
+    }
+
+    public void setLink(String link) {
+        this.link = link;
+    }
+}
+
+
+
+
+
+package com.example.eda1707.movie;
+
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.support.customtabs.CustomTabsIntent;
+import android.support.v4.content.res.ResourcesCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.google.gson.Gson;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
+public class MainActivity extends AppCompatActivity {
+
+    private MovieAdapter movieAdapter;
+
+    InputMethodManager mInputMethodManager;
+
+    ProgressDialog dialog;
+
+    @BindView(R.id.recyclerView)
+    RecyclerView recyclerView;
+
+    @BindView(R.id.editText)
+    EditText editText;
+
+    int startNumber;
+    private final static int DISPLAY_NUMBER = 10;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
+
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+
+        movieAdapter = new MovieAdapter(getApplicationContext());
+
+        recyclerView.setLayoutManager(layoutManager);
+        recyclerView.setAdapter(movieAdapter);
+
+        movieAdapter.setOnItemClickListener(new MovieAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(MovieAdapter.ViewHolder holder, View view, int position) {
+                onClickMovieLink(position);
+            }
+        });
+
+        recyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                if (!recyclerView.canScrollVertically(1)) {
+                    sendRequest();
+                }
+            }
+        });
+
+        if(AppHelper.requestQueue == null) {
+            AppHelper.requestQueue = Volley.newRequestQueue(getApplicationContext());
+        }
+    }
+
+    @OnClick(R.id.button)
+    public void onClick(View v) {
+
+        mInputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);        //검색버튼 누르면 키 입력창 내려가기기
+        mInputMethodManager.hideSoftInputFromWindow(editText.getWindowToken(), 0);
+
+        if(editText.getText().toString().length() == 0) {
+            Toast.makeText(getApplicationContext(), "검색어를 입력해주세요", Toast.LENGTH_SHORT).show();
+        } else {
+            movieAdapter.clearItems();
+            showProgressDialog();
+            startNumber=1;
+            sendRequest();
+            recyclerView.setVisibility(View.VISIBLE);
+            return;
+        }
+    }
+
+    /**
+     * 영화 목록에서 클릭한 영화 링크로 이동하는 메소드
+     *
+     * @param position 클릭한 영화 목록 포지션 값
+     */
+    private void onClickMovieLink(int position) {
+        try {
+            MovieInfo item = movieAdapter.getItem(position);
+
+            String url = item.getLink();
+            CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
+            CustomTabsIntent customTabsIntent = builder.build();                    //크롬 커스텀 탭
+
+            builder.setToolbarColor(ResourcesCompat.getColor(getResources(), R.color.colorPrimary, null)); //색깔
+            builder.setExitAnimations(MainActivity.this, R.anim.slide_in_left, R.anim.slide_out_right); //애니메이션
+            builder.setCloseButtonIcon(BitmapFactory.decodeResource(getResources(), R.drawable.back_arrow)); //아이콘?
+
+            customTabsIntent.launchUrl(MainActivity.this, Uri.parse(url));
+        } catch (NullPointerException e) {
+            Log.e(this.getClass().getName(), "영화 링크가 존재하지 않습니다.", e);
+
+            Toast.makeText(this, "영화 링크가 존재하지 않습니다.", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Log.e(this.getClass().getName(), "영화 링크 이동 중 알 수 없는 오류가 발생하였습니다.", e);
+
+            Toast.makeText(this, "영화 링크 이동 중 알 수 없는 오류가 발생하였습니다. 다시 시도해 주시기 바랍니다.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showProgressDialog() {
+        dialog = new ProgressDialog(this);
+        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        dialog.setMessage("잠시만요..");
+        dialog.show();
+    }
+
+    private void cancelProgressDialog() {
+        dialog.dismiss();
+    }
+
+    public void sendRequest() {
+
+        String url = "https://openapi.naver.com/v1/search/movie.json?query=" + editText.getText().toString() + "&display=" + DISPLAY_NUMBER + "&start=" + startNumber;
+
+        StringRequest request = new StringRequest(
+                Request.Method.GET,
+                url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        processResponse(response);
+                        cancelProgressDialog();
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        println("에러 -> " + error.getMessage());
+                        cancelProgressDialog();
+                    }
+                }
+        ) {
+            @Override
+            public Map getHeaders() throws AuthFailureError {
+                Map params = new HashMap();
+                params.put("X-Naver-Client-Id", "qoVBFXrOuojTZv402K_f");
+                params.put("X-Naver-Client-Secret", "eIsMSoxWQ4");
+
+                return params;
+            }
+        };
+        request.setShouldCache(false);          //이전결과있어도 새로 요청
+        AppHelper.requestQueue.add(request);
+    }
+
+    public void processResponse(String response) {
+        Gson gson = new Gson();
+        MovieList movieList = gson.fromJson(response, MovieList.class);
+
+        Log.i("test", response);
+
+        if(movieList != null && movieList.items.size() != 0) {
+            movieAdapter.addItems(movieList.items);
+            startNumber += movieList.items.size();
+        } else {
+            Toast.makeText(this, "\'"+ editText.getText().toString() + "\' 검색 결과는 없습니다..", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void println(String data) {
+        Log.i(getClass().getName().toString(), data + "\n");
+    }
+}
+
+
+
+
+
+
+
+
+
